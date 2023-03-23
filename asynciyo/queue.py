@@ -8,7 +8,7 @@ class AsyncQueue:
         self.__queue: deque[Task] = deque()
         self.__wait_get: deque[Future] = deque()
         self.__wait_put: deque[Future] = deque()
-        self.__maxsize: int = maxsize if maxsize > 0 else None
+        self.__maxsize: int = maxsize if maxsize is not None and maxsize > 0 else None
         from . import _get_event_loop
         self.__loop = _get_event_loop()
 
@@ -47,14 +47,14 @@ class AsyncQueue:
         return item
 
     async def put(self, item):
-        if self.full():
+        while self.full():
             fut = Future()
             self.__wait_put.append(fut)
             await fut
         self.__put_nowait(item)
 
     async def get(self):
-        if self.empty():
+        while self.empty():
             fut = Future()
             self.__wait_get.append(fut)
             await fut
